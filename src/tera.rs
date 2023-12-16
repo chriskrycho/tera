@@ -447,6 +447,19 @@ impl Tera {
         result
     }
 
+    /// Render a one-off template using an existing Tera instance, *without* caching the template
+    /// contents, and without support for inheritance.
+    ///
+    /// This allows reuse of a Tera instance across threads (since it is not mutable), at the cost
+    /// of support for inheritance, since inheritance currently requires updating Tera's internal
+    /// tracking of inheritance chains.
+    pub fn render_one_off(&self, input: &str, context: &Context) -> Result<String> {
+        let tpl = Template::new(ONE_OFF_TEMPLATE_NAME, None, input)
+            .map_err(|e| Error::chain(format!("Failed to parse '{}'", ONE_OFF_TEMPLATE_NAME), e))?;
+        let renderer = Renderer::new(&tpl, self, context);
+        renderer.render()
+    }
+
     /// Renders a one off template (for example a template coming from a user input) given a `Context`
     ///
     /// This creates a separate instance of Tera with no possibilities of adding custom filters
